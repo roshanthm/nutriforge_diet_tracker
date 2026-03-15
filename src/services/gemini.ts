@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { User, FoodLog, WeightLog } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "" });
 
 export async function getAICoachAdvice(user: User, logs: FoodLog[], weightHistory: WeightLog[]) {
   const today = new Date().toISOString().split('T')[0];
