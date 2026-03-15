@@ -1,0 +1,198 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// This security rules file assumes the following data structures:
+//
+// Collection: /users/{userId}
+// Document ID: Firebase Auth UID
+// Fields:
+//   - uid: string (required) - Firebase Auth UID
+//   - name: string (required) - User's name
+//   - age: int (required) - User's age
+//   - gender: string (required) - 'male' or 'female'
+//   - height: number (required) - Height in cm
+//   - current_weight: number (required) - Current weight in kg
+//   - target_weight: number (required) - Target weight in kg
+//   - target_duration: int (required) - Duration in weeks
+//   - activity_level: string (required) - 'sedentary', 'light', 'moderate', 'active', 'extra'
+//   - gym_frequency: int (optional)
+//   - diet_preference: string (optional)
+//   - bmr: number (required)
+//   - maintenance_calories: number (required)
+//   - daily_target: number (required)
+//   - created_at: timestamp (required)
+//
+// Collection: /users/{userId}/food_logs/{logId}
+// Fields:
+//   - food_name: string (required)
+//   - calories: number (required)
+//   - protein: number (required)
+//   - carbs: number (required)
+//   - fat: number (required)
+//   - meal_type: string (required) - 'breakfast', 'lunch', 'dinner', 'snacks'
+//   - grams: number (required)
+//   - logged_at: string (required) - YYYY-MM-DD
+//   - created_at: timestamp (required)
+//
+// [Other subcollections follow similar ownership patterns]
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "roshanpattathilsep16@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function validString(field, min, max) {
+      return request.resource.data[field] is string && 
+             request.resource.data[field].size() >= min && 
+             request.resource.data[field].size() <= max;
+    }
+
+    function isFriend(userId) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/friendships/$(request.auth.uid + '_' + userId)) ||
+        exists(/databases/$(database)/documents/friendships/$(userId + '_' + request.auth.uid));
+    }
+
+    function isAcceptedFriend(userId) {
+      let ids = request.auth.uid < userId ? request.auth.uid + '_' + userId : userId + '_' + request.auth.uid;
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/friendships/$(ids)) && 
+        get(/databases/$(database)/documents/friendships/$(ids)).data.status == 'accepted';
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'name', 'age', 'gender', 'height', 'current_weight', 'target_weight', 'daily_target']) &&
+             data.uid == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.age is number && data.age > 0 && data.age < 120 &&
+             data.gender in ['male', 'female'] &&
+             data.activity_level in ['sedentary', 'light', 'moderate', 'active', 'extra'];
+    }
+
+    function isValidFoodLog(data) {
+      return hasRequiredFields(['food_name', 'calories', 'meal_type', 'logged_at']) &&
+             data.food_name is string && data.food_name.size() > 0 && data.food_name.size() < 200 &&
+             data.calories is number && data.calories >= 0 &&
+             data.meal_type in ['breakfast', 'lunch', 'dinner', 'snacks'] &&
+             data.logged_at is string && data.logged_at.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function isValidFriendship(data) {
+      return hasRequiredFields(['user_ids', 'status', 'requester_id']) &&
+             data.user_ids is list && data.user_ids.size() == 2 &&
+             request.auth.uid in data.user_ids &&
+             data.status == 'pending' &&
+             data.requester_id == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAcceptedFriend(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data)) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+
+      match /food_logs/{logId} {
+        allow read: if isOwner(userId) || isAcceptedFriend(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidFoodLog(request.resource.data);
+        allow update: if (isOwner(userId) && isValidFoodLog(request.resource.data)) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /weight_logs/{logId} {
+        allow read: if isOwner(userId) || isAcceptedFriend(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /water_logs/{logId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /reminders/{reminderId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /badges/{badgeId} {
+        allow read: if isOwner(userId) || isAcceptedFriend(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /custom_foods/{foodId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /users_public/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    match /friendships/{friendshipId} {
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.user_ids;
+      allow create: if isAuthenticated() && isValidFriendship(request.resource.data);
+      allow update: if isAuthenticated() && request.auth.uid in resource.data.user_ids &&
+                    (
+                      (resource.data.status == 'pending' && request.resource.data.status == 'accepted' && request.auth.uid != resource.data.requester_id) ||
+                      isAdmin()
+                    );
+      allow delete: if isAuthenticated() && request.auth.uid in resource.data.user_ids || isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

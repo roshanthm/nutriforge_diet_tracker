@@ -1,107 +1,20 @@
-# NutriForge 
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-NutriForge is a modern **diet and calorie tracking web application** designed for people who want to **gain weight in a structured and scientific way**.
+# Run and deploy your AI Studio app
 
-The application helps users track their daily food intake, monitor calorie progress, and achieve their target weight through smart nutrition tracking.
+This contains everything you need to run your app locally.
 
----
+View your app in AI Studio: https://ai.studio/apps/169a1b0d-2463-43bb-b4e8-4edb31795fde
 
-##  Features
+## Run Locally
 
-###  Goal Based Diet Planning
-- Set **current weight**
-- Set **target weight**
-- Choose **time duration**
-- Automatically calculates **daily calorie requirements**
+**Prerequisites:**  Node.js
 
-###  Food Tracking
-- Track meals for:
-  - Breakfast
-  - Lunch
-  - Dinner
-  - Snacks
-- Add food with **grams and serving size**
-- Automatic **calorie calculation**
 
-###  Large Food Database
-- Search thousands of foods using **free nutrition APIs**
-- Includes:
-  - Bakery items
-  - Packaged foods
-  - Restaurant foods
-  - Indian foods
-  - Fruits and vegetables
-  - Meat and dairy
-
-###  Nutrition Analytics
-- Track **daily calories**
-- Track **protein, carbs, and fats**
-- View **calorie progress charts**
-- Weight progress tracking
-
-Example:
-
-Calories: `1800 / 2500 kcal`
-
-Protein: `90g / 120g`
-
-Carbs: `220g / 300g`
-
-Fat: `60g / 80g`
-
----
-
-## 📈 Progress Tracking
-
-The app provides visual analytics including:
-
-- Daily calorie progress
-- Macro distribution charts
-- Weight progress graphs
-- Weekly diet summary
-
----
-
-##  Smart Suggestions
-
-If your daily calorie goal is not reached, the system recommends foods to help meet your calorie target.
-
-Example suggestions:
-
-- Peanut butter sandwich
-- Protein shake
-- Banana smoothie
-- Rice with chicken
-
----
-
-## 🛠 Tech Stack
-
-Frontend  
-- React
-- Vite
-- Tailwind CSS
-
-Backend  
-- Node.js
-
-Charts  
-- Chart.js / Recharts
-
-APIs  
-- USDA FoodData Central API
-- Open Food Facts API
-
----
-
-## 📦 Installation
-
-Clone the repository
-
-```bash
-git clone https://github.com/roshanthm/nutriforge.git
-
-```
-## 👨‍💻 Author
-
-**Roshan Thomas**
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

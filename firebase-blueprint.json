@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User's physical stats and goals",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string" },
+        "age": { "type": "integer" },
+        "gender": { "type": "string", "enum": ["male", "female"] },
+        "height": { "type": "number", "description": "Height in cm" },
+        "current_weight": { "type": "number", "description": "Current weight in kg" },
+        "target_weight": { "type": "number", "description": "Target weight in kg" },
+        "target_duration": { "type": "integer", "description": "Duration in weeks" },
+        "activity_level": { "type": "string", "enum": ["sedentary", "light", "moderate", "active", "extra"] },
+        "gym_frequency": { "type": "integer" },
+        "diet_preference": { "type": "string" },
+        "bmr": { "type": "number" },
+        "maintenance_calories": { "type": "number" },
+        "daily_target": { "type": "number" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "age", "gender", "height", "current_weight", "target_weight", "daily_target"]
+    },
+    "UserPublic": {
+      "title": "Public User Info",
+      "description": "Non-sensitive user data for search",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["uid", "name"]
+    },
+    "FoodLog": {
+      "title": "Food Log",
+      "description": "A single food entry",
+      "type": "object",
+      "properties": {
+        "food_name": { "type": "string" },
+        "calories": { "type": "number" },
+        "protein": { "type": "number" },
+        "carbs": { "type": "number" },
+        "fat": { "type": "number" },
+        "meal_type": { "type": "string", "enum": ["breakfast", "lunch", "dinner", "snacks"] },
+        "grams": { "type": "number" },
+        "logged_at": { "type": "string", "format": "date", "description": "YYYY-MM-DD" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["food_name", "calories", "meal_type", "logged_at"]
+    },
+    "WeightLog": {
+      "title": "Weight Log",
+      "description": "A weight entry",
+      "type": "object",
+      "properties": {
+        "weight": { "type": "number" },
+        "logged_at": { "type": "string", "format": "date" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["weight", "logged_at"]
+    },
+    "WaterLog": {
+      "title": "Water Log",
+      "description": "A water intake entry",
+      "type": "object",
+      "properties": {
+        "amount_ml": { "type": "integer" },
+        "logged_at": { "type": "string", "format": "date" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["amount_ml", "logged_at"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "User notification reminder",
+      "type": "object",
+      "properties": {
+        "reminder_type": { "type": "string", "enum": ["breakfast", "lunch", "dinner", "water"] },
+        "reminder_time": { "type": "string", "description": "HH:mm" },
+        "is_enabled": { "type": "boolean" }
+      },
+      "required": ["reminder_type", "reminder_time", "is_enabled"]
+    },
+    "Badge": {
+      "title": "Badge",
+      "description": "Earned achievement badge",
+      "type": "object",
+      "properties": {
+        "badge_type": { "type": "string" },
+        "earned_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["badge_type", "earned_at"]
+    },
+    "Friendship": {
+      "title": "Friendship",
+      "description": "Connection between two users",
+      "type": "object",
+      "properties": {
+        "user_ids": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["pending", "accepted"] },
+        "requester_id": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_ids", "status", "requester_id"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/users_public/{userId}": {
+      "schema": "UserPublic",
+      "description": "Publicly searchable user info"
+    },
+    "/users/{userId}/food_logs/{logId}": {
+      "schema": "FoodLog",
+      "description": "User's food logs"
+    },
+    "/users/{userId}/weight_logs/{logId}": {
+      "schema": "WeightLog",
+      "description": "User's weight history"
+    },
+    "/users/{userId}/water_logs/{logId}": {
+      "schema": "WaterLog",
+      "description": "User's water intake"
+    },
+    "/users/{userId}/reminders/{reminderId}": {
+      "schema": "Reminder",
+      "description": "User's reminders"
+    },
+    "/users/{userId}/badges/{badgeId}": {
+      "schema": "Badge",
+      "description": "User's earned badges"
+    },
+    "/friendships/{friendshipId}": {
+      "schema": "Friendship",
+      "description": "Friendship records between users"
+    }
+  }
+}
