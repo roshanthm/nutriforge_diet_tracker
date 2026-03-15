@@ -107,11 +107,37 @@ export default function FoodSearch({ onClose, onLog, mealType }: FoodSearchProps
       let apiResults: FoodSearchResult[] = [];
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-        if (res.ok) {
+        const contentType = res.headers.get("content-type");
+        if (res.ok && contentType && contentType.includes("application/json")) {
           apiResults = await res.json();
+        } else {
+          throw new Error("Backend not available or returned non-JSON");
         }
       } catch (err) {
-        console.error('API Search error:', err);
+        // Fallback for Vercel/Netlify where the Express backend isn't running
+        try {
+          const apiKey = import.meta.env.VITE_USDA_API_KEY || 'DEMO_KEY';
+          const usdaRes = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=10&api_key=${apiKey}`);
+          if (usdaRes.ok) {
+            const data = await usdaRes.json();
+            apiResults = data.foods.map((food: any) => {
+              const getNutrient = (id: number) => food.foodNutrients.find((n: any) => n.nutrientId === id)?.value || 0;
+              return {
+                id: food.fdcId,
+                name: food.description,
+                brand: food.brandOwner,
+                calories: getNutrient(1008),
+                protein: getNutrient(1003),
+                carbs: getNutrient(1005),
+                fat: getNutrient(1004),
+                servingSize: 100,
+                servingUnit: 'g'
+              };
+            });
+          }
+        } catch (fallbackErr) {
+          console.error('API Search error:', fallbackErr);
+        }
       }
 
       // Combine and deduplicate by name
